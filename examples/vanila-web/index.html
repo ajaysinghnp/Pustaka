@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pustaka Vanilla JS Example</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="container">
+    <button id="prevBtn" type="button">Previous</button>
+    <div id="pustaka-container"></div>
+    <button id="nextBtn" type="button">Next</button>
+  </div>
+
+  <script type="module">
+    import { Pustaka } from '../../dist/pustaka.esm.js';
+
+    const container = document.getElementById('pustaka-container');
+    const pustaka = new Pustaka({
+      container,
+      pdfUrl: 'example.pdf', // adjust path relative to this file
+    });
+
+    pustaka.init();
+
+    document.getElementById('prevBtn').addEventListener('click', () => pustaka.prev());
+    document.getElementById('nextBtn').addEventListener('click', () => pustaka.next());
+  </script>
+</body>
+
+</html>

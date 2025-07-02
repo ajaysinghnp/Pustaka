@@ -23,6 +23,14 @@ export class Pustaka {
   }
 
   public async init() {
+    if (!this.pdfUrl) {
+      throw new Error('PDF URL is required');
+    }
+    if (!this.container) {
+      throw new Error('Container element is required');
+    }
+    // eslint-disable-next-line no-undef
+    console.log('Initializing Pustaka with PDF URL:', this.pdfUrl);
     this.pdfDoc = await pdfjsLib.getDocument(this.pdfUrl).promise;
     this.totalPages = this.pdfDoc.numPages;
     this.render();
