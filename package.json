@@ -13,7 +13,7 @@
     "test": "vitest",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "repository": "https://github.com/ajaysinghnp/pustaka",
   "author": "Ajay Singh",
