@@ -1,0 +1,21 @@
+{
+  "name": "pustaka",
+  "version": "0.1.0",
+  "description": "A beautiful natural book-like PDF reader",
+  "main": "dist/pustaka.umd.js",
+  "module": "dist/pustaka.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "test": "vitest",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write .",
+    "prepare": "husky install"
+  },
+  "repository": "https://github.com/ajaysinghnp/pustaka",
+  "author": "Ajay Singh",
+  "license": "MIT"
+}
