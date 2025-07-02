@@ -49,5 +49,8 @@
       "prettier --write",
       "eslint --fix"
     ]
+  },
+  "release": {
+    "tagFormat": "${version}"
   }
 }
