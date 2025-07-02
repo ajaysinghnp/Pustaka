@@ -4,6 +4,7 @@
   "description": "A beautiful natural book-like PDF reader",
   "main": "dist/pustaka.umd.js",
   "module": "dist/pustaka.esm.js",
+  "type": "module",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
@@ -30,6 +31,7 @@
     "@semantic-release/github": "^11.0.3",
     "@semantic-release/npm": "^12.0.2",
     "@types/node": "^24.0.10",
+    "@types/pdfjs-dist": "^2.10.377",
     "@typescript-eslint/eslint-plugin": "^8.35.1",
     "@typescript-eslint/parser": "^8.35.1",
     "eslint": "^9.30.1",

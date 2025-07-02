@@ -1,18 +1,18 @@
-import typescript from "@rollup/plugin-typescript";
-import { nodeResolve } from "@rollup/plugin-node-resolve";
+import typescript from '@rollup/plugin-typescript';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 export default {
-  input: "packages/core/src/index.ts",
+  input: 'packages/core/index.ts',
   output: [
     {
-      file: "dist/pustaka.umd.js",
-      format: "umd",
-      name: "Pustaka"
+      file: 'dist/pustaka.umd.js',
+      format: 'umd',
+      name: 'Pustaka',
     },
     {
-      file: "dist/pustaka.esm.js",
-      format: "esm"
-    }
+      file: 'dist/pustaka.esm.js',
+      format: 'esm',
+    },
   ],
-  plugins: [nodeResolve(), typescript()]
+  plugins: [nodeResolve(), typescript()],
 };

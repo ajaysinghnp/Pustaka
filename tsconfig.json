@@ -1,11 +1,18 @@
 {
   "compilerOptions": {
     "target": "ES6",
+    "moduleResolution": "node",
     "module": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
     "declaration": true,
     "outDir": "./dist",
     "strict": true,
-    "esModuleInterop": true
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["packages/core/src"]
+  "include": ["packages/core"]
 }
