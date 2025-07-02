@@ -17,5 +17,14 @@
   },
   "repository": "https://github.com/ajaysinghnp/pustaka",
   "author": "Ajay Singh",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "pdfjs-dist": "^5.3.31"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.4",
+    "rollup": "^4.44.1",
+    "typescript": "^5.8.3"
+  }
 }
