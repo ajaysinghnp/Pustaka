@@ -1,9 +1,9 @@
-/* eslint-env browser */
-
 import * as pdfjsLib from 'pdfjs-dist';
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.entry';
+import workerSrc from 'pdfjs-dist/build/pdf.worker.entry.js';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+const blob = new Blob([workerSrc], { type: 'application/javascript' });
+const blobUrl = URL.createObjectURL(blob);
+pdfjsLib.GlobalWorkerOptions.workerSrc = blobUrl;
 
 export interface PustakaOptions {
   container: HTMLElement;
@@ -11,91 +11,27 @@ export interface PustakaOptions {
 }
 
 export class Pustaka {
-  private container: HTMLElement;
-  private pdfUrl: string;
-  private pdfDoc: pdfjsLib.PDFDocumentProxy | null = null;
-  private currentPage = 1;
-  private totalPages = 0;
+  container: HTMLElement;
+  pdfUrl: string;
 
   constructor(options: PustakaOptions) {
     this.container = options.container;
     this.pdfUrl = options.pdfUrl;
   }
 
-  public async init() {
-    if (!this.pdfUrl) {
-      throw new Error('PDF URL is required');
-    }
-    if (!this.container) {
-      throw new Error('Container element is required');
-    }
-    // eslint-disable-next-line no-undef
-    console.log('Initializing Pustaka with PDF URL:', this.pdfUrl);
-    this.pdfDoc = await pdfjsLib.getDocument(this.pdfUrl).promise;
-    this.totalPages = this.pdfDoc.numPages;
-    this.render();
-  }
+  async init() {
+    const loadingTask = pdfjsLib.getDocument(this.pdfUrl);
+    const pdf = await loadingTask.promise;
 
-  private async render() {
-    if (!this.pdfDoc) return;
+    const page = await pdf.getPage(1);
 
-    // Clear container
-    this.container.innerHTML = '';
-
-    const leftPageNum = this.currentPage;
-    const rightPageNum = this.currentPage + 1;
-
-    const leftCanvas = await this.renderPage(leftPageNum);
-    const rightCanvas =
-      rightPageNum <= this.totalPages
-        ? await this.renderPage(rightPageNum)
-        : null;
-
-    const bookWrapper = document.createElement('div');
-    bookWrapper.className = 'pustaka-book';
-
-    leftCanvas.classList.add('pustaka-page', 'left');
-    bookWrapper.appendChild(leftCanvas);
-
-    if (rightCanvas) {
-      rightCanvas.classList.add('pustaka-page', 'right');
-      bookWrapper.appendChild(rightCanvas);
-    }
-
-    this.container.appendChild(bookWrapper);
-
-    // Example: click anywhere to go next
-    bookWrapper.addEventListener('click', () => this.next());
-  }
-
-  private async renderPage(pageNum: number): Promise<HTMLCanvasElement> {
-    if (!this.pdfDoc) throw new Error('PDF not loaded');
-
-    const page = await this.pdfDoc.getPage(pageNum);
-
-    const viewport = page.getViewport({ scale: 1.2 });
+    const viewport = page.getViewport({ scale: 1.5 });
     const canvas = document.createElement('canvas');
+    this.container.appendChild(canvas);
     const context = canvas.getContext('2d')!;
-
-    canvas.width = viewport.width;
     canvas.height = viewport.height;
+    canvas.width = viewport.width;
 
     await page.render({ canvasContext: context, viewport }).promise;
-
-    return canvas;
-  }
-
-  public next() {
-    if (this.currentPage + 2 <= this.totalPages) {
-      this.currentPage += 2;
-      this.render();
-    }
-  }
-
-  public prev() {
-    if (this.currentPage - 2 >= 1) {
-      this.currentPage -= 2;
-      this.render();
-    }
   }
 }

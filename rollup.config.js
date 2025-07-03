@@ -1,12 +1,16 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import url from '@rollup/plugin-url';
+import * as stringPlugin from 'rollup-plugin-string';
 import alias from '@rollup/plugin-alias';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Equivalent of __filename and __dirname in ES modules:
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Handle CommonJS default export in ESM:
+const string = stringPlugin.default || ((opts) => stringPlugin(opts));
 
 export default {
   input: 'packages/core/index.ts',
@@ -25,20 +29,17 @@ export default {
     alias({
       entries: [
         {
-          find: 'pdfjs-dist/build/pdf.worker.min',
+          find: 'pdfjs-dist/build/pdf.worker.entry.js',
           replacement: path.resolve(
             __dirname,
-            'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
+            'node_modules/pdfjs-dist/build/pdf.worker.entry.js',
           ),
         },
       ],
     }),
     nodeResolve(),
-    url({
-      include: ['**/pdf.worker.entry.js', '**/pdf.worker.js', '**/*.worker.js'],
-      limit: 0,
-      emitFiles: true,
-      fileName: '[name][extname]',
+    string({
+      include: '**/pdf.worker.entry.js',
     }),
     typescript(),
   ],
