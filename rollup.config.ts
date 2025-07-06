@@ -1,7 +1,8 @@
 import typescript from '@rollup/plugin-typescript';
+import type { RollupOptions } from 'rollup';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import * as stringPlugin from 'rollup-plugin-string';
 import alias from '@rollup/plugin-alias';
+import pkg from './package.json' assert { type: 'json' };
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -9,10 +10,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Handle CommonJS default export in ESM:
-const string = stringPlugin.default || ((opts) => stringPlugin(opts));
-
-export default {
+const config: RollupOptions = {
   input: 'packages/core/index.ts',
   output: [
     {
@@ -38,9 +36,9 @@ export default {
       ],
     }),
     nodeResolve(),
-    string({
-      include: '**/pdf.worker.entry.js',
-    }),
     typescript(),
   ],
+  external: Object.keys(pkg.dependencies),
 };
+
+export default config;

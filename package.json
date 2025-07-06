@@ -10,7 +10,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup --config rollup.config.ts --configPlugin typescript",
     "test": "vitest",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
