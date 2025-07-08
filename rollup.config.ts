@@ -2,13 +2,12 @@ import typescript from '@rollup/plugin-typescript';
 import type { RollupOptions } from 'rollup';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import alias from '@rollup/plugin-alias';
-import pkg from './package.json' assert { type: 'json' };
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from 'node:url';
 
 // Equivalent of __filename and __dirname in ES modules:
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __pdf_worker = fileURLToPath(
+  new URL('node_modules/pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url),
+);
 
 const config: RollupOptions = {
   input: 'packages/core/index.ts',
@@ -28,17 +27,14 @@ const config: RollupOptions = {
       entries: [
         {
           find: 'pdfjs-dist/build/pdf.worker.entry.js',
-          replacement: path.resolve(
-            __dirname,
-            'node_modules/pdfjs-dist/build/pdf.worker.entry.js',
-          ),
+          replacement: __pdf_worker,
         },
       ],
     }),
     nodeResolve(),
     typescript(),
   ],
-  external: Object.keys(pkg.dependencies),
+  // external: Object.keys(pkg.dependencies),
 };
 
 export default config;
