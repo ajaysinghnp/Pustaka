@@ -13,10 +13,11 @@ export class Pustaka {
   }
 
   private initWorker() {
-    PDFJS.GlobalWorkerOptions.workerSrc = new URL(
-      './pdf.worker.min.mjs',
-      import.meta.url,
-    ).toString();
+    PDFJS.GlobalWorkerOptions.workerSrc =
+      typeof document !== 'undefined'
+        ? new URL('./workers/pdf.worker.min.js', import.meta.url).toString()
+        : // eslint-disable-next-line no-undef
+          require.resolve('pdfjs-dist/build/pdf.worker.min.js');
   }
 
   async loadPDF(url: string): Promise<void> {

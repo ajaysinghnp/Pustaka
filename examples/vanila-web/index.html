@@ -34,7 +34,8 @@
 
     // Enable buttons when PDF is loaded
     viewer.loadPDF('./example.pdf').then(() => {
-      container.querySelector('.loading').remove();
+      var loadingElement = container.querySelector('.loading');
+      if (loadingElement) loadingElement.remove();
       updatePageInfo();
       nextBtn.disabled = false;
     }).catch(err => {

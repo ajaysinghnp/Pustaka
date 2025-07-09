@@ -1,7 +1,9 @@
+// rollup.config.ts
 import typescript from '@rollup/plugin-typescript';
-import type { RollupOptions } from 'rollup';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import url from '@rollup/plugin-url';
+import commonjs from '@rollup/plugin-commonjs';
+import copy from 'rollup-plugin-copy';
+import { RollupOptions } from 'rollup';
 
 const config: RollupOptions = {
   input: 'packages/core/index.ts',
@@ -25,17 +27,26 @@ const config: RollupOptions = {
   ],
   plugins: [
     nodeResolve({
-      extensions: ['.mjs', '.js'], // Handle .mjs files
+      extensions: ['.mjs', '.js', '.ts'],
       preferBuiltins: true,
     }),
+    commonjs(),
     typescript(),
-    url({
-      include: ['**/pdf.worker.min.mjs'],
-      limit: 0, // Always emit as file
-      fileName: '[name][extname]',
+    copy({
+      targets: [
+        {
+          src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
+          dest: 'dist/workers',
+          rename: 'pdf.worker.min.js',
+        },
+        {
+          src: 'node_modules/pdfjs-dist/build/pdf.worker.mjs.map',
+          dest: 'dist/workers',
+          rename: 'pdf.worker.min.js.map',
+        },
+      ],
     }),
   ],
-  // external: Object.keys(pkg.dependencies),
 };
 
 export default config;
