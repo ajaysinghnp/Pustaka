@@ -9,25 +9,53 @@
 </head>
 
 <body>
+  <!-- example/index.html -->
   <div class="container">
-    <button id="prevBtn" type="button">Previous</button>
-    <div id="pustaka-container"></div>
-    <button id="nextBtn" type="button">Next</button>
+    <div id="pustaka-container">
+      <div class="loading">Loading PDF...</div>
+    </div>
+
+    <div class="controls">
+      <button id="prev-btn" disabled>Previous</button>
+      <span id="page-info">Page 1 of 1</span>
+      <button id="next-btn" disabled>Next</button>
+    </div>
   </div>
 
-  <script type="module">
-    import { Pustaka } from '../../dist/pustaka.esm.js';
+  <script src="../../dist/pustaka.umd.js"></script>
 
+  <script>
     const container = document.getElementById('pustaka-container');
-    const pustaka = new Pustaka({
-      container,
-      pdfUrl: 'example.pdf', // adjust path relative to this file
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const pageInfo = document.getElementById('page-info');
+
+    const viewer = new Pustaka.Pustaka(container);
+
+    // Enable buttons when PDF is loaded
+    viewer.loadPDF('./example.pdf').then(() => {
+      container.querySelector('.loading').remove();
+      updatePageInfo();
+      nextBtn.disabled = false;
+    }).catch(err => {
+      container.innerHTML = `Failed to load PDF: ${err.message}`;
     });
 
-    pustaka.init();
+    function updatePageInfo() {
+      pageInfo.textContent = `Page ${viewer.currentPage} of ${viewer.pdfDoc.numPages}`;
+      prevBtn.disabled = viewer.currentPage <= 1;
+      nextBtn.disabled = viewer.currentPage >= viewer.pdfDoc.numPages;
+    }
 
-    document.getElementById('prevBtn').addEventListener('click', () => pustaka.prev());
-    document.getElementById('nextBtn').addEventListener('click', () => pustaka.next());
+    prevBtn.addEventListener('click', () => {
+      viewer.prevPage();
+      updatePageInfo();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      viewer.nextPage();
+      updatePageInfo();
+    });
   </script>
 </body>
 

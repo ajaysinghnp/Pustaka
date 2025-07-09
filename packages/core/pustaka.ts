@@ -4,62 +4,99 @@ export class Pustaka {
   private container: HTMLElement;
   private pdfDoc: any;
   private currentPage = 1;
-  private pageWidth: number = 800;
-  private pageHeight: number = 600;
+  private pageCanvas: HTMLCanvasElement | null = null;
+  private nextCanvas: HTMLCanvasElement | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
-    PDFJS.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    this.initWorker();
+  }
+
+  private initWorker() {
+    PDFJS.GlobalWorkerOptions.workerSrc = new URL(
+      './pdf.worker.min.mjs',
+      import.meta.url,
+    ).toString();
   }
 
   async loadPDF(url: string): Promise<void> {
     this.pdfDoc = await PDFJS.getDocument(url).promise;
-    this.renderPage(this.currentPage);
+    await this.preparePages();
+    this.renderCurrentPage();
   }
 
-  private async renderPage(pageNum: number) {
+  private async preparePages() {
+    this.pageCanvas = await this.createPageCanvas(this.currentPage);
+    if (this.currentPage < this.pdfDoc.numPages) {
+      this.nextCanvas = await this.createPageCanvas(this.currentPage + 1);
+    }
+  }
+
+  private async createPageCanvas(pageNum: number): Promise<HTMLCanvasElement> {
     const page = await this.pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale: 1.5 });
 
     const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
+    canvas.className = `page-${pageNum}`;
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
     await page.render({
-      canvasContext: context,
+      canvasContext: canvas.getContext('2d'),
       viewport: viewport,
     }).promise;
 
+    return canvas;
+  }
+
+  private renderCurrentPage() {
+    if (!this.pageCanvas) return;
+
     this.container.innerHTML = '';
-    this.container.appendChild(canvas);
+    this.container.appendChild(this.pageCanvas);
+
+    // Add shadow for book-like effect
+    this.container.style.boxShadow = '5px 5px 15px rgba(0,0,0,0.3)';
   }
 
-  nextPage() {
+  async nextPage() {
+    if (this.currentPage >= this.pdfDoc.numPages) return;
+
+    await this.applyPageTurnAnimation('right');
+    this.currentPage++;
+    this.pageCanvas = this.nextCanvas;
+
     if (this.currentPage < this.pdfDoc.numPages) {
-      this.currentPage++;
-      this.renderPage(this.currentPage);
-      this.applyPageTurnEffect('right');
+      this.nextCanvas = await this.createPageCanvas(this.currentPage + 1);
+    } else {
+      this.nextCanvas = null;
     }
+
+    this.renderCurrentPage();
   }
 
-  prevPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.renderPage(this.currentPage);
-      this.applyPageTurnEffect('left');
-    }
+  async prevPage() {
+    if (this.currentPage <= 1) return;
+
+    await this.applyPageTurnAnimation('left');
+    this.currentPage--;
+    this.nextCanvas = this.pageCanvas;
+    this.pageCanvas = await this.createPageCanvas(this.currentPage);
+
+    this.renderCurrentPage();
   }
 
-  private applyPageTurnEffect(direction: 'left' | 'right') {
-    // Placeholder for flip animation
-    this.container.style.transition = 'transform 0.6s';
-    this.container.style.transform = `perspective(1000px) rotateY(${direction === 'right' ? -10 : 10}deg)`;
+  private applyPageTurnAnimation(direction: 'left' | 'right'): Promise<void> {
+    return new Promise((resolve) => {
+      this.container.style.transition = 'transform 0.8s ease';
+      this.container.style.transform = `perspective(1500px) rotateY(${direction === 'right' ? -180 : 180}deg)`;
 
-    // eslint-disable-next-line no-undef
-    setTimeout(() => {
-      this.container.style.transform = 'perspective(1000px) rotateY(0deg)';
-    }, 600);
+      // eslint-disable-next-line no-undef
+      setTimeout(() => {
+        this.container.style.transition = 'none';
+        this.container.style.transform = 'perspective(1500px) rotateY(0deg)';
+        resolve();
+      }, 800);
+    });
   }
 }
