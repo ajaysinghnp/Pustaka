@@ -6,13 +6,16 @@
     "lib": ["ESNext", "DOM"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "resolveJsonModule": true,
     "noImplicitAny": false,
     "skipLibCheck": true,
-    "declaration": true,
     "outDir": "./dist",
     "strict": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["rollup.config.ts", "packages/core"]
+  "include": ["rollup.config.ts", "packages/core"],
+  "exclude": ["node_modules", "dist"]
 }
