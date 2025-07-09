@@ -1,37 +1,65 @@
-import * as pdfjsLib from 'pdfjs-dist';
-import workerSrc from 'pdfjs-dist/build/pdf.worker.entry.js';
-
-const blob = new Blob([workerSrc], { type: 'application/javascript' });
-const blobUrl = URL.createObjectURL(blob);
-pdfjsLib.GlobalWorkerOptions.workerSrc = blobUrl;
-
-export interface PustakaOptions {
-  container: HTMLElement;
-  pdfUrl: string;
-}
+import * as PDFJS from 'pdfjs-dist';
 
 export class Pustaka {
-  container: HTMLElement;
-  pdfUrl: string;
+  private container: HTMLElement;
+  private pdfDoc: any;
+  private currentPage = 1;
+  private pageWidth: number = 800;
+  private pageHeight: number = 600;
 
-  constructor(options: PustakaOptions) {
-    this.container = options.container;
-    this.pdfUrl = options.pdfUrl;
+  constructor(container: HTMLElement) {
+    this.container = container;
+    PDFJS.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
   }
 
-  async init() {
-    const loadingTask = pdfjsLib.getDocument(this.pdfUrl);
-    const pdf = await loadingTask.promise;
+  async loadPDF(url: string): Promise<void> {
+    this.pdfDoc = await PDFJS.getDocument(url).promise;
+    this.renderPage(this.currentPage);
+  }
 
-    const page = await pdf.getPage(1);
-
+  private async renderPage(pageNum: number) {
+    const page = await this.pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale: 1.5 });
+
     const canvas = document.createElement('canvas');
-    this.container.appendChild(canvas);
-    const context = canvas.getContext('2d')!;
+    const context = canvas.getContext('2d');
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    await page.render({ canvasContext: context, viewport }).promise;
+    await page.render({
+      canvasContext: context,
+      viewport: viewport,
+    }).promise;
+
+    this.container.innerHTML = '';
+    this.container.appendChild(canvas);
+  }
+
+  nextPage() {
+    if (this.currentPage < this.pdfDoc.numPages) {
+      this.currentPage++;
+      this.renderPage(this.currentPage);
+      this.applyPageTurnEffect('right');
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.renderPage(this.currentPage);
+      this.applyPageTurnEffect('left');
+    }
+  }
+
+  private applyPageTurnEffect(direction: 'left' | 'right') {
+    // Placeholder for flip animation
+    this.container.style.transition = 'transform 0.6s';
+    this.container.style.transform = `perspective(1000px) rotateY(${direction === 'right' ? -10 : 10}deg)`;
+
+    // eslint-disable-next-line no-undef
+    setTimeout(() => {
+      this.container.style.transform = 'perspective(1000px) rotateY(0deg)';
+    }, 600);
   }
 }
