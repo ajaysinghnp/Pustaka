@@ -16,10 +16,17 @@ const config: RollupOptions = {
       file: 'dist/pustaka.umd.js',
       format: 'umd',
       name: 'Pustaka',
+      sourcemap: true,
     },
     {
       file: 'dist/pustaka.esm.js',
       format: 'esm',
+      sourcemap: true,
+    },
+    {
+      file: 'dist/pustaka.cjs.js',
+      format: 'cjs',
+      sourcemap: true,
     },
   ],
   plugins: [
