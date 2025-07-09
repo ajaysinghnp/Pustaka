@@ -2,8 +2,9 @@
   "name": "pustaka",
   "version": "0.1.0",
   "description": "A beautiful natural book-like PDF reader",
-  "main": "dist/pustaka.umd.js",
+  "main": "dist/pustaka.cjs.js",
   "module": "dist/pustaka.esm.js",
+  "browser": "dist/pustaka.umd.js",
   "type": "module",
   "types": "dist/index.d.ts",
   "files": [
