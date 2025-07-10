@@ -1,9 +1,14 @@
+// core/pustaka.ts
+ 
 import * as PDFJS from 'pdfjs-dist';
+import { IPustaka } from './pustaka.interface';
 
-export class Pustaka {
+declare const console: Console;
+
+export class Pustaka implements IPustaka {
   private container: HTMLElement;
-  private pdfDoc: any;
-  private currentPage = 1;
+  private pdfDoc: PDFJS.PDFDocumentProxy | null = null;
+  private currentPageNum = 1;
   private pageCanvas: HTMLCanvasElement | null = null;
   private nextCanvas: HTMLCanvasElement | null = null;
 
@@ -12,7 +17,16 @@ export class Pustaka {
     this.initWorker();
   }
 
-  private initWorker() {
+  // Public properties with getters
+  get currentPage(): number {
+    return this.currentPageNum;
+  }
+
+  get totalPages(): number {
+    return this.pdfDoc?.numPages || 0;
+  }
+
+  private initWorker(): void {
     PDFJS.GlobalWorkerOptions.workerSrc =
       typeof document !== 'undefined'
         ? new URL('./workers/pdf.worker.min.js', import.meta.url).toString()
@@ -20,20 +34,50 @@ export class Pustaka {
           require.resolve('pdfjs-dist/build/pdf.worker.min.js');
   }
 
-  async loadPDF(url: string): Promise<void> {
-    this.pdfDoc = await PDFJS.getDocument(url).promise;
-    await this.preparePages();
-    this.renderCurrentPage();
+  private async progressHandler(progress: {
+    loaded: number;
+    total: number;
+  }): Promise<void> {
+    const percent = Math.round((progress.loaded / progress.total) * 100);
+    console.log(`Loading: ${percent}%`);
   }
 
-  private async preparePages() {
-    this.pageCanvas = await this.createPageCanvas(this.currentPage);
-    if (this.currentPage < this.pdfDoc.numPages) {
-      this.nextCanvas = await this.createPageCanvas(this.currentPage + 1);
+  async loadPDF(url: string): Promise<void> {
+    try {
+      // Type-safe loading task
+      const loadingTask: {
+        promise: Promise<PDFJS.PDFDocumentProxy>;
+        // eslint-disable-next-line no-unused-vars
+        onProgress?: (progress: { loaded: number; total: number }) => void;
+      } = PDFJS.getDocument(url);
+
+      // Add progress handler if needed
+      loadingTask.onProgress = this.progressHandler;
+
+      this.pdfDoc = await loadingTask.promise;
+      await this.preparePages();
+      this.renderCurrentPage();
+    } catch (error) {
+      console.error('Failed to load PDF:', error);
+      throw new Error('PDF loading failed');
+    }
+  }
+
+  private async preparePages(): Promise<void> {
+    if (!this.pdfDoc) return;
+
+    this.pageCanvas = await this.createPageCanvas(this.currentPageNum);
+
+    if (this.currentPageNum < this.pdfDoc.numPages) {
+      this.nextCanvas = await this.createPageCanvas(this.currentPageNum + 1);
     }
   }
 
   private async createPageCanvas(pageNum: number): Promise<HTMLCanvasElement> {
+    if (!this.pdfDoc) {
+      throw new Error('PDF document not loaded');
+    }
+
     const page = await this.pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale: 1.5 });
 
@@ -43,32 +87,30 @@ export class Pustaka {
     canvas.width = viewport.width;
 
     await page.render({
-      canvasContext: canvas.getContext('2d'),
+      canvasContext: canvas.getContext('2d') as CanvasRenderingContext2D,
       viewport: viewport,
     }).promise;
 
     return canvas;
   }
 
-  private renderCurrentPage() {
+  private renderCurrentPage(): void {
     if (!this.pageCanvas) return;
 
     this.container.innerHTML = '';
     this.container.appendChild(this.pageCanvas);
-
-    // Add shadow for book-like effect
     this.container.style.boxShadow = '5px 5px 15px rgba(0,0,0,0.3)';
   }
 
-  async nextPage() {
-    if (this.currentPage >= this.pdfDoc.numPages) return;
+  async nextPage(): Promise<void> {
+    if (!this.pdfDoc || this.currentPageNum >= this.pdfDoc.numPages) return;
 
     await this.applyPageTurnAnimation('right');
-    this.currentPage++;
+    this.currentPageNum++;
     this.pageCanvas = this.nextCanvas;
 
-    if (this.currentPage < this.pdfDoc.numPages) {
-      this.nextCanvas = await this.createPageCanvas(this.currentPage + 1);
+    if (this.currentPageNum < this.pdfDoc.numPages) {
+      this.nextCanvas = await this.createPageCanvas(this.currentPageNum + 1);
     } else {
       this.nextCanvas = null;
     }
@@ -76,13 +118,13 @@ export class Pustaka {
     this.renderCurrentPage();
   }
 
-  async prevPage() {
-    if (this.currentPage <= 1) return;
+  async prevPage(): Promise<void> {
+    if (!this.pdfDoc || this.currentPageNum <= 1) return;
 
     await this.applyPageTurnAnimation('left');
-    this.currentPage--;
+    this.currentPageNum--;
     this.nextCanvas = this.pageCanvas;
-    this.pageCanvas = await this.createPageCanvas(this.currentPage);
+    this.pageCanvas = await this.createPageCanvas(this.currentPageNum);
 
     this.renderCurrentPage();
   }
