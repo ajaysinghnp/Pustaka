@@ -1,9 +1,6 @@
 // core/pustaka.ts
- 
 import * as PDFJS from 'pdfjs-dist';
 import { IPustaka } from './pustaka.interface';
-
-declare const console: Console;
 
 export class Pustaka implements IPustaka {
   private container: HTMLElement;
@@ -34,33 +31,10 @@ export class Pustaka implements IPustaka {
           require.resolve('pdfjs-dist/build/pdf.worker.min.js');
   }
 
-  private async progressHandler(progress: {
-    loaded: number;
-    total: number;
-  }): Promise<void> {
-    const percent = Math.round((progress.loaded / progress.total) * 100);
-    console.log(`Loading: ${percent}%`);
-  }
-
   async loadPDF(url: string): Promise<void> {
-    try {
-      // Type-safe loading task
-      const loadingTask: {
-        promise: Promise<PDFJS.PDFDocumentProxy>;
-        // eslint-disable-next-line no-unused-vars
-        onProgress?: (progress: { loaded: number; total: number }) => void;
-      } = PDFJS.getDocument(url);
-
-      // Add progress handler if needed
-      loadingTask.onProgress = this.progressHandler;
-
-      this.pdfDoc = await loadingTask.promise;
-      await this.preparePages();
-      this.renderCurrentPage();
-    } catch (error) {
-      console.error('Failed to load PDF:', error);
-      throw new Error('PDF loading failed');
-    }
+    this.pdfDoc = await PDFJS.getDocument(url).promise;
+    await this.preparePages();
+    this.renderCurrentPage();
   }
 
   private async preparePages(): Promise<void> {
