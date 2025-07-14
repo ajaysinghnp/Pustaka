@@ -1,0 +1,65 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f0f0f0;
+  gap: 0.25rem;
+  padding: 0.25rem;
+}
+
+/* example/style.css */
+#pustaka-container {
+  width: 50vw;
+  height: 95vh;
+  background: white;
+  margin: 0 auto;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.8s ease;
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+  border-radius: 2px 5px 5px 2px;
+}
+
+#pustaka-container canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 2px;
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+}
+
+button {
+  padding: 0.1rem 1rem;
+  font-size: 0.8rem;
+  background: #4a6fa5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #3a5a8f;
+}
+
+button:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+}

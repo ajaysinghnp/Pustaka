@@ -1,47 +1,131 @@
-/* example/style.css */
-#pustaka-container {
-  width: 800px;
-  height: 600px;
-  background: white;
-  margin: 0 auto;
-  position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.8s ease;
-  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
-  border-radius: 2px 5px 5px 2px;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-#pustaka-container canvas {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  border-radius: 2px;
-}
-
-.controls {
+.container {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  margin: 20px 0;
+  background-color: #f0f0f0;
+  gap: 0.25rem;
+  padding: 0.25rem;
 }
 
-button {
-  padding: 12px 24px;
-  font-size: 16px;
-  background: #4a6fa5;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.3s;
+/* styles.css */
+.pustaka-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-button:hover {
-  background: #3a5a8f;
+.pustaka-cover {
+  position: relative;
+  max-width: 900px;
+  height: 95vh;
+  background: #e4cc9c;
+  border-radius: 0.8rem;
+  box-shadow: 15px 15px 30px rgba(0, 0, 0, 0.5);
+  transform-style: preserve-3d;
+  transition:
+    transform 0.8s ease,
+    box-shadow 0.8s ease;
+  display: flex;
 }
 
-button:disabled {
-  background: #cccccc;
-  cursor: not-allowed;
+.pustaka-spine {
+  position: absolute;
+  left: -20px;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: #5d4037;
+  /* Dark brown */
+  border-radius: 5px 0 0 5px;
+  box-shadow: inset -5px 0 10px rgba(0, 0, 0, 0.3);
+  transform: translateZ(-20px);
+  z-index: 2;
+}
+
+.pustaka-pages {
+  position: relative;
+  flex: 1;
+  background: #fff;
+  margin: 20px;
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pustaka-page {
+  position: relative;
+  width: 95%;
+  height: 95%;
+  display: flex;
+  perspective: 1500px;
+  transform-style: preserve-3d;
+}
+
+.pustaka-page-canvas {
+  flex: 1;
+  background: white;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.pustaka-center-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: rgba(0, 0, 0, 0.1);
+  transform: translateX(-1px);
+  z-index: 2;
+}
+
+.pustaka-page-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  z-index: 3;
+}
+
+.pustaka-page-edge.left {
+  left: -5px;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.1), transparent);
+}
+
+.pustaka-page-edge.right {
+  right: -5px;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.1), transparent);
+}
+
+/* Book-like styling */
+.pustaka-book::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 15px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), transparent);
+  z-index: 2;
+}
+
+.pustaka-book::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 15px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.1), transparent);
+  z-index: 2;
 }

@@ -5,6 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pustaka Vanilla JS Example</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -16,14 +19,19 @@
     </div>
 
     <div class="controls">
-      <button id="prev-btn" disabled>Previous</button>
+      <button id="prev-btn" disabled>
+        <i class="fa-solid fa-circle-left"></i>
+        Prev
+      </button>
       <span id="page-info">Page 1 of 1</span>
-      <button id="next-btn" disabled>Next</button>
+      <button id="next-btn" disabled>
+        Next
+        <i class="fa-solid fa-circle-right"></i>
+      </button>
     </div>
   </div>
 
   <script src="../../dist/pustaka.umd.js"></script>
-
   <script defer>
     const container = document.getElementById('pustaka-container');
     const prevBtn = document.getElementById('prev-btn');
