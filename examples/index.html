@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Book Core Example</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+
+<body style="margin: 0; padding: 0; overflow: hidden;">
+  <div style="display: flex; flex-direction: column; gap: 1em; align-items: center; background: #dfdfdf; height: 100vh">
+    <div style="">
+      <button id="prevBtn">Previous Page</button>
+      <span id="pageInfo">Page 1 of 1</span>
+      <button id="nextBtn">Next Page</button>
+      <input type="file" id="fileInput" accept=".pdf" style="margin-top: 10px;">
+    </div>
+    <canvas id="pdfCanvas" height="820" width="750" style="border: 1px solid #ccc; background: #FFF"></canvas>
+  </div>
+
+  <script type="module">
+    import { PdfBookCore } from '../dist/pustaka.esm.js';
+
+    // Set PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const canvas = document.getElementById('pdfCanvas');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const pageInfo = document.getElementById('pageInfo');
+    const fileInput = document.getElementById('fileInput');
+
+    let pdfBook = null;
+
+    // Custom file fetcher for demonstration
+    const fileFetcher = async (url) => {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.arrayBuffer();
+    };
+
+    // Initialize PDF Book Core
+    const initializePdfBook = (pdfSource) => {
+      if (pdfBook) {
+        pdfBook.dispose();
+      }
+
+      pdfBook = new PdfBookCore({
+        canvas: canvas,
+        pdfSource: pdfSource,
+        fileFetcher: fileFetcher
+      });
+
+      // Event listeners
+      pdfBook.on('ready', ({ totalPages }) => {
+        console.log(`PDF loaded with ${totalPages} pages`);
+        updatePageInfo();
+        updateButtons();
+      });
+
+      pdfBook.on('error', ({ message, error }) => {
+        console.error('PDF Book Error:', message, error);
+        alert(`Error: ${message}`);
+      });
+
+      pdfBook.on('pageChanged', ({ currentPage }) => {
+        updatePageInfo();
+        updateButtons();
+      });
+
+      pdfBook.on('pageLoaded', ({ pageNumber, page }) => {
+        console.log(`Page ${pageNumber} loaded`);
+      });
+
+      pdfBook.on('renderComplete', ({ frameTime }) => {
+        // Optional: Monitor performance
+        if (frameTime > 16) { // More than 16ms (60fps threshold)
+          console.warn(`Slow frame: ${frameTime}ms`);
+        }
+      });
+    };
+
+    const updatePageInfo = () => {
+      if (pdfBook && pdfBook.isReady()) {
+        pageInfo.textContent = `Page ${pdfBook.getCurrentPage()} of ${pdfBook.getTotalPages()}`;
+      }
+    };
+
+    const updateButtons = () => {
+      if (pdfBook && pdfBook.isReady()) {
+        prevBtn.disabled = pdfBook.getCurrentPage() <= 1;
+        nextBtn.disabled = pdfBook.getCurrentPage() >= pdfBook.getTotalPages();
+      }
+    };
+
+    // Event listeners
+    prevBtn.addEventListener('click', async () => {
+      if (pdfBook) {
+        try {
+          await pdfBook.previousPage();
+        } catch (error) {
+          console.error('Error going to previous page:', error);
+        }
+      }
+    });
+
+    nextBtn.addEventListener('click', async () => {
+      if (pdfBook) {
+        try {
+          await pdfBook.nextPage();
+        } catch (error) {
+          console.error('Error going to next page:', error);
+        }
+      }
+    });
+
+    fileInput.addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (file && file.type === 'application/pdf') {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          initializePdfBook(arrayBuffer);
+        } catch (error) {
+          console.error('Error loading file:', error);
+          alert('Error loading PDF file');
+        }
+      }
+    });
+
+    // Handle canvas resize
+    const resizeCanvas = () => {
+      const container = canvas.parentElement;
+      const containerRect = container.getBoundingClientRect();
+
+      // A4 aspect ratio (210mm x 297mm ≈ 1:√2)
+      const A4_ASPECT_RATIO = 210 / 297; // ≈ 0.707
+
+      // Get maximum available space with some padding
+      const maxWidth = Math.min(750, containerRect.width - 40);
+      const maxHeight = Math.min(820, window.innerHeight - 200);
+
+      // Calculate dimensions that maintain A4 aspect ratio
+      let width, height;
+
+      // Check if container is wider than A4 aspect ratio
+      if (maxWidth / maxHeight > A4_ASPECT_RATIO) {
+        // Container is wider than A4 - constrain by height
+        height = maxHeight;
+        width = height * A4_ASPECT_RATIO;
+      } else {
+        // Container is taller than A4 - constrain by width
+        width = maxWidth;
+        height = width / A4_ASPECT_RATIO;
+      }
+
+      // Ensure we don't exceed maximum dimensions
+      width = Math.min(width, maxWidth);
+      height = Math.min(height, maxHeight);
+
+      // Apply the calculated dimensions
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+
+      // Set the actual canvas size (accounting for device pixel ratio)
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+
+      // Notify the PDF book of the resize
+      if (pdfBook) {
+        pdfBook.resize(width * dpr, height * dpr);
+      }
+
+      console.log(`Resized canvas to ${width}x${height} (${width * dpr}x${height * dpr} @ ${dpr}x)`);
+    };
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Load a sample PDF (replace with your own URL)
+    initializePdfBook('https://getsamplefiles.com/download/pdf/sample-1.pdf');
+  </script>
+</body>
+
+</html>
