@@ -138,26 +138,15 @@
       const container = canvas.parentElement;
       const containerRect = container.getBoundingClientRect();
 
-      // A4 aspect ratio (210mm x 297mm ≈ 1:√2)
-      const A4_ASPECT_RATIO = 210 / 297; // ≈ 0.707
-
       // Get maximum available space with some padding
-      const maxWidth = Math.min(750, containerRect.width - 40);
-      const maxHeight = Math.min(820, window.innerHeight - 200);
+      const maxWidth = containerRect.width - 10;
+      const maxHeight = window.innerHeight - 50;
 
       // Calculate dimensions that maintain A4 aspect ratio
       let width, height;
 
-      // Check if container is wider than A4 aspect ratio
-      if (maxWidth / maxHeight > A4_ASPECT_RATIO) {
-        // Container is wider than A4 - constrain by height
-        height = maxHeight;
-        width = height * A4_ASPECT_RATIO;
-      } else {
-        // Container is taller than A4 - constrain by width
-        width = maxWidth;
-        height = width / A4_ASPECT_RATIO;
-      }
+      width = maxWidth;
+      height = maxHeight;
 
       // Ensure we don't exceed maximum dimensions
       width = Math.min(width, maxWidth);
@@ -176,8 +165,6 @@
       if (Pustaka) {
         Pustaka.resize(width * dpr, height * dpr);
       }
-
-      console.log(`Resized canvas to ${width}x${height} (${width * dpr}x${height * dpr} @ ${dpr}x)`);
     };
 
     window.addEventListener('resize', resizeCanvas);

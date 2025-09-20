@@ -96,7 +96,7 @@ export class PustakaLoader {
 
     try {
       const page = await this.document.getPage(pageNumber);
-      const viewport = page.getViewport({ scale });
+      const viewport = page.getViewport({ scale: scale * 2 });
 
       // Create canvas for rendering
       const canvas = this.createCanvas(viewport.width, viewport.height);

@@ -41,6 +41,8 @@ export class WebGLRenderer {
   private previousTexture: WebGLTexture | null = null;
   private orientation: 'landscape' | 'portrait' = 'landscape';
   private projectionMatrix: Float32Array = new Float32Array(16);
+  private currentPageAspect: number = A4_ASPECT; // Add this
+  private previousPageAspect: number = A4_ASPECT; // Add this
 
   private flippingPage: {
     isFlipping: boolean;
@@ -58,8 +60,8 @@ export class WebGLRenderer {
 
   constructor(canvas: HTMLCanvasElement | OffscreenCanvas) {
     this.context = this.initializeWebGL(canvas);
+    this.projectionMatrix = this.createProjectionMatrix(); // Initialize
   }
-
   private initializeWebGL(
     canvas: HTMLCanvasElement | OffscreenCanvas,
   ): WebGLContextWrapper {
@@ -151,41 +153,23 @@ export class WebGLRenderer {
     this.orientation = orientation;
 
     // Recalculate the projection matrix based on orientation
-    this.updateProjectionMatrix();
+    this.createProjectionMatrix();
 
     // You might also need to adjust other rendering parameters
     // based on the orientation (like page layout, etc.)
   }
 
-  private updateProjectionMatrix(): void {
-    if (this.orientation === 'landscape') {
-      // Use a wider aspect ratio for landscape (two-page spread)
-      this.projectionMatrix = this.createLandscapeProjectionMatrix();
-    } else {
-      // Use a taller aspect ratio for portrait (single page)
-      this.projectionMatrix = this.createPortraitProjectionMatrix();
-    }
-  }
-
-  private createLandscapeProjectionMatrix(): Float32Array {
-    // Wider aspect ratio for landscape (two-page view)
-    return new Float32Array([2, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1]);
-  }
-
-  private createPortraitProjectionMatrix(): Float32Array {
-    // Taller aspect ratio for portrait (single page view)
-    return new Float32Array([1, 0, 0, 0, 0, 2, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1]);
-  }
-
   loadPageTexture(page: pustakaPage, isPrevious: boolean = false): void {
     const { gl } = this.context;
+    const aspect = page.width / page.height;
 
     if (isPrevious) {
       if (this.previousTexture) {
         gl.deleteTexture(this.previousTexture);
       }
       this.previousTexture = createTexture(gl, page.canvas);
-      page.texture = this.previousTexture; // Assign to page.texture
+      this.previousPageAspect = aspect; // Set the aspect ratio
+      page.texture = this.previousTexture;
     } else {
       if (this.currentTexture) {
         // Move current to previous before loading new current
@@ -193,9 +177,11 @@ export class WebGLRenderer {
           gl.deleteTexture(this.previousTexture);
         }
         this.previousTexture = this.currentTexture;
+        this.previousPageAspect = this.currentPageAspect; // Move aspect too
       }
       this.currentTexture = createTexture(gl, page.canvas);
-      page.texture = this.currentTexture; // Assign to page.texture
+      this.currentPageAspect = aspect; // Set the aspect ratio
+      page.texture = this.currentTexture;
     }
   }
 
@@ -258,69 +244,28 @@ export class WebGLRenderer {
   }
 
   render(currentPage: number): void {
-    const { gl, program, buffers, uniforms, attributes } = this.context;
+    const { gl, program, uniforms } = this.context;
 
-    // Set viewport
+    // Set viewport and clear
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
-    // Clear canvas
-    gl.clearColor(0.8, 0.8, 0.8, 1.0);
-    gl.clearDepth(1.0);
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
+    gl.clearColor(0.9, 0.9, 0.9, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    if (!this.currentTexture) {
-      return; // Nothing to render yet
-    }
 
     // Use shader program
     gl.useProgram(program);
 
-    // Bind position buffer
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-    gl.vertexAttribPointer(
-      attributes.aVertexPosition,
-      3,
-      gl.FLOAT,
+    // Set projection matrix
+    gl.uniformMatrix4fv(
+      uniforms.uProjectionMatrix,
       false,
-      0,
-      0,
+      this.projectionMatrix,
     );
-    gl.enableVertexAttribArray(attributes.aVertexPosition);
-
-    // Bind texture coordinate buffer
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
-    gl.vertexAttribPointer(attributes.aTextureCoord, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(attributes.aTextureCoord);
-
-    // Bind index buffer
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
-
-    // Set up matrices (identity for now - will be enhanced for book flipping)
-    this.projectionMatrix = this.createProjectionMatrix();
-    const modelViewMatrix = this.createIdentityMatrix();
 
     if (this.flippingPage.isFlipping) {
       this.renderFlippingPage(currentPage);
     } else {
       this.renderStaticPages(currentPage);
     }
-
-    gl.uniformMatrix4fv(
-      uniforms.uProjectionMatrix,
-      false,
-      this.projectionMatrix,
-    );
-    gl.uniformMatrix4fv(uniforms.uModelViewMatrix, false, modelViewMatrix);
-
-    // Bind texture
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.currentTexture);
-    gl.uniform1i(uniforms.uSampler, 0);
-
-    // Draw
-    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
   }
 
   private createProjectionMatrix(): Float32Array {
@@ -328,8 +273,9 @@ export class WebGLRenderer {
     const canvasAspect = canvas.width / canvas.height;
 
     if (this.orientation === 'landscape') {
-      // For landscape (two-page spread)
-      const scale = Math.min(1, canvasAspect / (2 * A4_ASPECT));
+      // For two-page spread
+      const spreadAspect = 2 * A4_ASPECT;
+      const scale = Math.min(1, canvasAspect / spreadAspect);
       return new Float32Array([
         scale / canvasAspect,
         0,
@@ -349,7 +295,7 @@ export class WebGLRenderer {
         1,
       ]);
     } else {
-      // For portrait (single page)
+      // For single page
       const scale = Math.min(1, canvasAspect / A4_ASPECT);
       return new Float32Array([
         scale / canvasAspect,
@@ -370,10 +316,6 @@ export class WebGLRenderer {
         1,
       ]);
     }
-  }
-
-  private createIdentityMatrix(): Float32Array {
-    return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   }
 
   dispose(): void {
@@ -477,30 +419,9 @@ export class WebGLRenderer {
   }
 
   private renderStaticPages(currentPage: number): void {
-    const { gl, program, uniforms } = this.context;
-
-    // Set viewport
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
-    // Clear canvas
-    gl.clearColor(0.8, 0.8, 0.8, 1.0);
-    gl.clearDepth(1.0);
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    // Use shader program
-    gl.useProgram(program);
-
-    // Set up matrices
-    const projectionMatrix = this.createProjectionMatrix();
-    gl.uniformMatrix4fv(uniforms.uProjectionMatrix, false, projectionMatrix);
-
     if (this.orientation === 'landscape') {
-      // Render two-page spread
       this.renderTwoPageSpread(currentPage);
     } else {
-      // Render single page
       this.renderSinglePage();
     }
   }
@@ -508,15 +429,27 @@ export class WebGLRenderer {
   private renderSinglePage(): void {
     const { gl, buffers, uniforms, attributes } = this.context;
 
-    // Create model-view matrix for single page (centered)
-    const modelViewMatrix = new Float32Array([
-      1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
-    ]);
-
-    gl.uniformMatrix4fv(uniforms.uModelViewMatrix, false, modelViewMatrix);
-
-    // Bind and draw the current page
     if (this.currentTexture) {
+      const modelViewMatrix = new Float32Array([
+        this.currentPageAspect,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+      ]);
+
+      gl.uniformMatrix4fv(uniforms.uModelViewMatrix, false, modelViewMatrix);
       gl.bindTexture(gl.TEXTURE_2D, this.currentTexture);
       this.bindAndDrawPage(buffers, attributes, uniforms);
     }
@@ -525,25 +458,43 @@ export class WebGLRenderer {
   private renderTwoPageSpread(currentPage: number): void {
     const { gl, buffers, uniforms, attributes } = this.context;
 
-    // Left page (current page - 1 or empty if at first page)
+    // Use the stored aspect ratios or fallback to A4
+    const leftAspect = this.previousPageAspect;
+    const rightAspect = this.currentPageAspect;
+
+    // Calculate total width for centering
+    const totalWidth = leftAspect + rightAspect;
+
+    // Center position for the entire spread
+    const centerX = -totalWidth / 2;
+
+    // console.log('Rendering two-page spread:', {
+    //   currentPage,
+    //   leftAspect,
+    //   rightAspect,
+    //   totalWidth,
+    //   centerX,
+    // });
+
+    // Left page (current page - 1)
     if (currentPage > 1 && this.previousTexture) {
       const leftPageMatrix = new Float32Array([
-        A4_ASPECT,
+        leftAspect,
         0,
         0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
+        0, // Scale X by page aspect
         0,
         1,
         0,
-        -A4_ASPECT / 2,
+        0, // Scale Y by 1
         0,
         0,
-        1, // Position to the left
+        1,
+        0, // No scale on Z
+        centerX + leftAspect / 2,
+        0,
+        0,
+        1, // Position
       ]);
 
       gl.uniformMatrix4fv(uniforms.uModelViewMatrix, false, leftPageMatrix);
@@ -554,22 +505,22 @@ export class WebGLRenderer {
     // Right page (current page)
     if (this.currentTexture) {
       const rightPageMatrix = new Float32Array([
-        A4_ASPECT,
+        rightAspect,
         0,
         0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
+        0, // Scale X by page aspect
         0,
         1,
         0,
-        A4_ASPECT / 2,
+        0, // Scale Y by 1
         0,
         0,
-        1, // Position to the right
+        1,
+        0, // No scale on Z
+        centerX + leftAspect + rightAspect / 2,
+        0,
+        0,
+        1, // Position
       ]);
 
       gl.uniformMatrix4fv(uniforms.uModelViewMatrix, false, rightPageMatrix);
