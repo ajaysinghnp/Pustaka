@@ -6,21 +6,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF Book Core Example</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
 </head>
 
-<body style="margin: 0; padding: 0; overflow: hidden;">
-  <div style="display: flex; flex-direction: column; gap: 1em; align-items: center; background: #dfdfdf; height: 100vh">
-    <div style="">
+<body>
+  <div class="container">
+    <div class="controls">
       <button id="prevBtn">Previous Page</button>
       <span id="pageInfo">Page 1 of 1</span>
       <button id="nextBtn">Next Page</button>
-      <input type="file" id="fileInput" accept=".pdf" style="margin-top: 10px;">
+      <label for="fileInput">Select PDF file:
+        <input type="file" id="fileInput" accept=".pdf" title="Choose a PDF file" placeholder="Choose a PDF file">
+      </label>
     </div>
-    <canvas id="pdfCanvas" height="820" width="750" style="border: 1px solid #ccc; background: #FFF"></canvas>
+    <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
   </div>
 
   <script type="module">
-    import { PdfBookCore } from '../dist/pustaka.esm.js';
+    import { PustakaCore } from '../dist/pustaka.esm.js';
 
     // Set PDF.js worker
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -31,7 +34,7 @@
     const pageInfo = document.getElementById('pageInfo');
     const fileInput = document.getElementById('fileInput');
 
-    let pdfBook = null;
+    let Pustaka = null;
 
     // Custom file fetcher for demonstration
     const fileFetcher = async (url) => {
@@ -43,39 +46,39 @@
     };
 
     // Initialize PDF Book Core
-    const initializePdfBook = (pdfSource) => {
-      if (pdfBook) {
-        pdfBook.dispose();
+    const initializePustaka = (pdfSource) => {
+      if (Pustaka) {
+        Pustaka.dispose();
       }
 
-      pdfBook = new PdfBookCore({
+      Pustaka = new PustakaCore({
         canvas: canvas,
         pdfSource: pdfSource,
         fileFetcher: fileFetcher
       });
 
       // Event listeners
-      pdfBook.on('ready', ({ totalPages }) => {
+      Pustaka.on('ready', ({ totalPages }) => {
         console.log(`PDF loaded with ${totalPages} pages`);
         updatePageInfo();
         updateButtons();
       });
 
-      pdfBook.on('error', ({ message, error }) => {
+      Pustaka.on('error', ({ message, error }) => {
         console.error('PDF Book Error:', message, error);
         alert(`Error: ${message}`);
       });
 
-      pdfBook.on('pageChanged', ({ currentPage }) => {
+      Pustaka.on('pageChanged', ({ currentPage }) => {
         updatePageInfo();
         updateButtons();
       });
 
-      pdfBook.on('pageLoaded', ({ pageNumber, page }) => {
+      Pustaka.on('pageLoaded', ({ pageNumber, page }) => {
         console.log(`Page ${pageNumber} loaded`);
       });
 
-      pdfBook.on('renderComplete', ({ frameTime }) => {
+      Pustaka.on('renderComplete', ({ frameTime }) => {
         // Optional: Monitor performance
         if (frameTime > 16) { // More than 16ms (60fps threshold)
           console.warn(`Slow frame: ${frameTime}ms`);
@@ -84,23 +87,23 @@
     };
 
     const updatePageInfo = () => {
-      if (pdfBook && pdfBook.isReady()) {
-        pageInfo.textContent = `Page ${pdfBook.getCurrentPage()} of ${pdfBook.getTotalPages()}`;
+      if (Pustaka && Pustaka.isReady()) {
+        pageInfo.textContent = `Page ${Pustaka.getCurrentPage()} of ${Pustaka.getTotalPages()}`;
       }
     };
 
     const updateButtons = () => {
-      if (pdfBook && pdfBook.isReady()) {
-        prevBtn.disabled = pdfBook.getCurrentPage() <= 1;
-        nextBtn.disabled = pdfBook.getCurrentPage() >= pdfBook.getTotalPages();
+      if (Pustaka && Pustaka.isReady()) {
+        prevBtn.disabled = Pustaka.getCurrentPage() <= 1;
+        nextBtn.disabled = Pustaka.getCurrentPage() >= Pustaka.getTotalPages();
       }
     };
 
     // Event listeners
     prevBtn.addEventListener('click', async () => {
-      if (pdfBook) {
+      if (Pustaka) {
         try {
-          await pdfBook.previousPage();
+          await Pustaka.previousPage();
         } catch (error) {
           console.error('Error going to previous page:', error);
         }
@@ -108,9 +111,9 @@
     });
 
     nextBtn.addEventListener('click', async () => {
-      if (pdfBook) {
+      if (Pustaka) {
         try {
-          await pdfBook.nextPage();
+          await Pustaka.nextPage();
         } catch (error) {
           console.error('Error going to next page:', error);
         }
@@ -122,7 +125,7 @@
       if (file && file.type === 'application/pdf') {
         try {
           const arrayBuffer = await file.arrayBuffer();
-          initializePdfBook(arrayBuffer);
+          initializePustaka(arrayBuffer);
         } catch (error) {
           console.error('Error loading file:', error);
           alert('Error loading PDF file');
@@ -170,8 +173,8 @@
       canvas.height = height * dpr;
 
       // Notify the PDF book of the resize
-      if (pdfBook) {
-        pdfBook.resize(width * dpr, height * dpr);
+      if (Pustaka) {
+        Pustaka.resize(width * dpr, height * dpr);
       }
 
       console.log(`Resized canvas to ${width}x${height} (${width * dpr}x${height * dpr} @ ${dpr}x)`);
@@ -181,7 +184,7 @@
     resizeCanvas();
 
     // Load a sample PDF (replace with your own URL)
-    initializePdfBook('https://getsamplefiles.com/download/pdf/sample-1.pdf');
+    initializePustaka('./sample.pdf');
   </script>
 </body>
 

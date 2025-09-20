@@ -1,10 +1,10 @@
-import type { WebGLContextWrapper, PdfPage } from "../types";
+import type { WebGLContextWrapper, pustakaPage } from '../types';
 import {
   createShader,
   createProgram,
   createBuffer,
   createTexture,
-} from "../utils/webgl.utils";
+} from '../utils/webgl.utils';
 
 const vertexShaderSource = `
   attribute vec4 aVertexPosition;
@@ -39,19 +39,19 @@ export class WebGLRenderer {
   private context: WebGLContextWrapper;
   private currentTexture: WebGLTexture | null = null;
   private previousTexture: WebGLTexture | null = null;
-  private orientation: "landscape" | "portrait" = "landscape";
+  private orientation: 'landscape' | 'portrait' = 'landscape';
   private projectionMatrix: Float32Array = new Float32Array(16);
 
   private flippingPage: {
     isFlipping: boolean;
     progress: number; // 0 to 1
-    direction: "forward" | "backward";
+    direction: 'forward' | 'backward';
     fromPage: number;
     toPage: number;
   } = {
     isFlipping: false,
     progress: 0,
-    direction: "forward",
+    direction: 'forward',
     fromPage: 0,
     toPage: 0,
   };
@@ -61,7 +61,7 @@ export class WebGLRenderer {
   }
 
   private initializeWebGL(
-    canvas: HTMLCanvasElement | OffscreenCanvas
+    canvas: HTMLCanvasElement | OffscreenCanvas,
   ): WebGLContextWrapper {
     // Handle context creation differently based on canvas type
     let gl: WebGLRenderingContext | null = null;
@@ -69,14 +69,14 @@ export class WebGLRenderer {
     if (canvas instanceof HTMLCanvasElement) {
       // For HTMLCanvasElement, try both standard and experimental contexts
       gl =
-        (canvas.getContext("webgl") as WebGLRenderingContext) ||
-        (canvas.getContext("experimental-webgl") as WebGLRenderingContext);
+        (canvas.getContext('webgl') as WebGLRenderingContext) ||
+        (canvas.getContext('experimental-webgl') as WebGLRenderingContext);
     } else {
       // For OffscreenCanvas, only try standard context
-      gl = canvas.getContext("webgl") as WebGLRenderingContext;
+      gl = canvas.getContext('webgl') as WebGLRenderingContext;
     }
     if (!gl) {
-      throw new Error("WebGL not supported");
+      throw new Error('WebGL not supported');
     }
 
     // Create shaders
@@ -84,7 +84,7 @@ export class WebGLRenderer {
     const fragmentShader = createShader(
       gl,
       gl.FRAGMENT_SHADER,
-      fragmentShaderSource
+      fragmentShaderSource,
     );
 
     // Create program
@@ -111,18 +111,18 @@ export class WebGLRenderer {
     const indexBuffer = createBuffer(gl, indices, gl.ELEMENT_ARRAY_BUFFER);
 
     // Get attribute and uniform locations
-    const aVertexPosition = gl.getAttribLocation(program, "aVertexPosition");
-    const aTextureCoord = gl.getAttribLocation(program, "aTextureCoord");
+    const aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
+    const aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
 
-    const uSampler = gl.getUniformLocation(program, "uSampler");
-    const uModelViewMatrix = gl.getUniformLocation(program, "uModelViewMatrix");
+    const uSampler = gl.getUniformLocation(program, 'uSampler');
+    const uModelViewMatrix = gl.getUniformLocation(program, 'uModelViewMatrix');
     const uProjectionMatrix = gl.getUniformLocation(
       program,
-      "uProjectionMatrix"
+      'uProjectionMatrix',
     );
 
     if (!uSampler || !uModelViewMatrix || !uProjectionMatrix) {
-      throw new Error("Failed to get uniform locations");
+      throw new Error('Failed to get uniform locations');
     }
 
     return {
@@ -146,7 +146,7 @@ export class WebGLRenderer {
     };
   }
 
-  setOrientation(orientation: "landscape" | "portrait"): void {
+  setOrientation(orientation: 'landscape' | 'portrait'): void {
     // Store the current orientation
     this.orientation = orientation;
 
@@ -158,7 +158,7 @@ export class WebGLRenderer {
   }
 
   private updateProjectionMatrix(): void {
-    if (this.orientation === "landscape") {
+    if (this.orientation === 'landscape') {
       // Use a wider aspect ratio for landscape (two-page spread)
       this.projectionMatrix = this.createLandscapeProjectionMatrix();
     } else {
@@ -177,7 +177,7 @@ export class WebGLRenderer {
     return new Float32Array([1, 0, 0, 0, 0, 2, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1]);
   }
 
-  loadPageTexture(page: PdfPage, isPrevious: boolean = false): void {
+  loadPageTexture(page: pustakaPage, isPrevious: boolean = false): void {
     const { gl } = this.context;
 
     if (isPrevious) {
@@ -200,9 +200,9 @@ export class WebGLRenderer {
   }
 
   startFlip(
-    direction: "forward" | "backward",
+    direction: 'forward' | 'backward',
     fromPage: number,
-    toPage: number
+    toPage: number,
   ): void {
     this.flippingPage = {
       isFlipping: true,
@@ -236,7 +236,7 @@ export class WebGLRenderer {
       this.flippingPage = {
         isFlipping: false,
         progress: 0,
-        direction: "forward",
+        direction: 'forward',
         fromPage: 0,
         toPage: 0,
       };
@@ -250,7 +250,7 @@ export class WebGLRenderer {
     return this.flippingPage.isFlipping;
   }
 
-  getFlipDirection(): "forward" | "backward" | null {
+  getFlipDirection(): 'forward' | 'backward' | null {
     if (!this.flippingPage.isFlipping) {
       return null;
     }
@@ -285,7 +285,7 @@ export class WebGLRenderer {
       gl.FLOAT,
       false,
       0,
-      0
+      0,
     );
     gl.enableVertexAttribArray(attributes.aVertexPosition);
 
@@ -310,7 +310,7 @@ export class WebGLRenderer {
     gl.uniformMatrix4fv(
       uniforms.uProjectionMatrix,
       false,
-      this.projectionMatrix
+      this.projectionMatrix,
     );
     gl.uniformMatrix4fv(uniforms.uModelViewMatrix, false, modelViewMatrix);
 
@@ -327,7 +327,7 @@ export class WebGLRenderer {
     const canvas = this.context.canvas;
     const canvasAspect = canvas.width / canvas.height;
 
-    if (this.orientation === "landscape") {
+    if (this.orientation === 'landscape') {
       // For landscape (two-page spread)
       const scale = Math.min(1, canvasAspect / (2 * A4_ASPECT));
       return new Float32Array([
@@ -422,7 +422,7 @@ export class WebGLRenderer {
     gl.uniformMatrix4fv(
       uniforms.uProjectionMatrix,
       false,
-      this.projectionMatrix
+      this.projectionMatrix,
     );
 
     // Render the static pages in the background
@@ -438,10 +438,10 @@ export class WebGLRenderer {
     gl.uniformMatrix4fv(uniforms.uModelViewMatrix, false, flipMatrix);
 
     // Bind and draw the flipping page
-    if (this.flippingPage.direction === "forward" && this.currentTexture) {
+    if (this.flippingPage.direction === 'forward' && this.currentTexture) {
       gl.bindTexture(gl.TEXTURE_2D, this.currentTexture);
     } else if (
-      this.flippingPage.direction === "backward" &&
+      this.flippingPage.direction === 'backward' &&
       this.previousTexture
     ) {
       gl.bindTexture(gl.TEXTURE_2D, this.previousTexture);
@@ -496,7 +496,7 @@ export class WebGLRenderer {
     const projectionMatrix = this.createProjectionMatrix();
     gl.uniformMatrix4fv(uniforms.uProjectionMatrix, false, projectionMatrix);
 
-    if (this.orientation === "landscape") {
+    if (this.orientation === 'landscape') {
       // Render two-page spread
       this.renderTwoPageSpread(currentPage);
     } else {
@@ -579,9 +579,9 @@ export class WebGLRenderer {
   }
 
   private bindAndDrawPage(
-    buffers: WebGLContextWrapper["buffers"],
-    attributes: WebGLContextWrapper["attributes"],
-    uniforms: WebGLContextWrapper["uniforms"]
+    buffers: WebGLContextWrapper['buffers'],
+    attributes: WebGLContextWrapper['attributes'],
+    uniforms: WebGLContextWrapper['uniforms'],
   ): void {
     const { gl } = this.context;
 
@@ -593,7 +593,7 @@ export class WebGLRenderer {
       gl.FLOAT,
       false,
       0,
-      0
+      0,
     );
     gl.enableVertexAttribArray(attributes.aVertexPosition);
 

@@ -1,4 +1,4 @@
-import type { FileFetcher, PdfPage } from "../types";
+import type { FileFetcher, pustakaPage } from '../types';
 
 // Interface for PDF.js compatibility
 interface PdfJsDocument {
@@ -20,11 +20,11 @@ interface PdfJsStatic {
   GlobalWorkerOptions: { workerSrc: string };
 }
 
-export class PdfLoader {
+export class PustakaLoader {
   private pdfjs: PdfJsStatic | null = null;
   private document: PdfJsDocument | null = null;
   private fileFetcher?: FileFetcher;
-  private loadedPages: Map<number, PdfPage> = new Map();
+  private loadedPages: Map<number, pustakaPage> = new Map();
 
   constructor(fileFetcher?: FileFetcher) {
     this.fileFetcher = fileFetcher;
@@ -36,37 +36,37 @@ export class PdfLoader {
       this.pdfjs = await this.loadPdfJs();
     } catch (error) {
       throw new Error(
-        "PDF.js is required but not available. Please install pdfjs-dist as a peer dependency."
+        'PDF.js is required but not available. Please install pdfjs-dist as a peer dependency.',
       );
     }
   }
 
   private async loadPdfJs(): Promise<PdfJsStatic> {
     // This will be provided by the platform wrapper or throw if not available
-    if (typeof window !== "undefined" && (window as any).pdfjsLib) {
+    if (typeof window !== 'undefined' && (window as any).pdfjsLib) {
       return (window as any).pdfjsLib;
     }
 
     // For Node.js environments or dynamic imports
     try {
-      const pdfjsLib = await import("pdfjs-dist");
+      const pdfjsLib = await import('pdfjs-dist');
       return pdfjsLib as any;
     } catch (error) {
-      throw new Error("PDF.js not found");
+      throw new Error('PDF.js not found');
     }
   }
 
   async loadDocument(
-    source: string | ArrayBuffer | Uint8Array
+    source: string | ArrayBuffer | Uint8Array,
   ): Promise<number> {
     if (!this.pdfjs) {
-      throw new Error("PDF.js not initialized");
+      throw new Error('PDF.js not initialized');
     }
 
     let documentSource: ArrayBuffer | Uint8Array | string = source;
 
     // If source is a URL and we have a file fetcher, use it
-    if (typeof source === "string" && this.fileFetcher) {
+    if (typeof source === 'string' && this.fileFetcher) {
       try {
         documentSource = await this.fileFetcher(source);
       } catch (error) {
@@ -83,9 +83,9 @@ export class PdfLoader {
     }
   }
 
-  async getPage(pageNumber: number, scale: number = 1.0): Promise<PdfPage> {
+  async getPage(pageNumber: number, scale: number = 1.0): Promise<pustakaPage> {
     if (!this.document) {
-      throw new Error("No PDF document loaded");
+      throw new Error('No PDF document loaded');
     }
 
     // Check cache first
@@ -100,7 +100,7 @@ export class PdfLoader {
 
       // Create canvas for rendering
       const canvas = this.createCanvas(viewport.width, viewport.height);
-      const context = canvas.getContext("2d")!;
+      const context = canvas.getContext('2d')!;
 
       // Render page to canvas
       const renderTask = page.render({
@@ -109,7 +109,7 @@ export class PdfLoader {
       });
       await renderTask.promise;
 
-      const pdfPage: PdfPage = {
+      const pustakaPage: pustakaPage = {
         pageNumber,
         width: viewport.width,
         height: viewport.height,
@@ -117,8 +117,8 @@ export class PdfLoader {
       };
 
       // Cache the page
-      this.loadedPages.set(cacheKey, pdfPage);
-      return pdfPage;
+      this.loadedPages.set(cacheKey, pustakaPage);
+      return pustakaPage;
     } catch (error) {
       throw new Error(`Failed to render page ${pageNumber}: ${error}`);
     }
@@ -126,18 +126,18 @@ export class PdfLoader {
 
   private createCanvas(
     width: number,
-    height: number
+    height: number,
   ): HTMLCanvasElement | OffscreenCanvas {
     // Use OffscreenCanvas if available (for web workers), otherwise HTMLCanvasElement
-    if (typeof OffscreenCanvas !== "undefined") {
+    if (typeof OffscreenCanvas !== 'undefined') {
       return new OffscreenCanvas(width, height);
-    } else if (typeof document !== "undefined") {
-      const canvas = document.createElement("canvas");
+    } else if (typeof document !== 'undefined') {
+      const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
       return canvas;
     } else {
-      throw new Error("Canvas creation not supported in this environment");
+      throw new Error('Canvas creation not supported in this environment');
     }
   }
 

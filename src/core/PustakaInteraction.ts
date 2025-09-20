@@ -1,19 +1,19 @@
-// src/core/BookInteraction.ts
-import { EventEmitter } from "./EventEmitter";
+// src/core/PustakaInteraction.ts
+import { EventEmitter } from './EventEmitter';
 
-export interface BookInteractionEvents {
-  startFlip: { direction: "forward" | "backward" };
+export interface PustakaInteractionEvents {
+  startFlip: { direction: 'forward' | 'backward' };
   updateFlip: { progress: number };
-  completeFlip: { direction: "forward" | "backward" };
+  completeFlip: { direction: 'forward' | 'backward' };
   cancelFlip: void;
 }
 
-export class BookInteraction extends EventEmitter<BookInteractionEvents> {
+export class PustakaInteraction extends EventEmitter<PustakaInteractionEvents> {
   private canvas: HTMLCanvasElement;
   private isInteracting: boolean = false;
   private startX: number = 0;
   private currentX: number = 0;
-  private flipDirection: "forward" | "backward" | null = null;
+  private flipDirection: 'forward' | 'backward' | null = null;
   private flipProgress: number = 0;
   private readonly flipThreshold: number = 0.3; // 30% progress needed to complete flip
 
@@ -25,26 +25,26 @@ export class BookInteraction extends EventEmitter<BookInteractionEvents> {
 
   private setupEventListeners(): void {
     // Mouse events
-    this.canvas.addEventListener("mousedown", this.handleMouseDown);
-    this.canvas.addEventListener("mousemove", this.handleMouseMove);
-    this.canvas.addEventListener("mouseup", this.handleMouseUp);
-    this.canvas.addEventListener("mouseleave", this.handleMouseUp);
+    this.canvas.addEventListener('mousedown', this.handleMouseDown);
+    this.canvas.addEventListener('mousemove', this.handleMouseMove);
+    this.canvas.addEventListener('mouseup', this.handleMouseUp);
+    this.canvas.addEventListener('mouseleave', this.handleMouseUp);
 
     // Touch events
-    this.canvas.addEventListener("touchstart", this.handleTouchStart);
-    this.canvas.addEventListener("touchmove", this.handleTouchMove);
-    this.canvas.addEventListener("touchend", this.handleTouchEnd);
-    this.canvas.addEventListener("touchcancel", this.handleTouchEnd);
+    this.canvas.addEventListener('touchstart', this.handleTouchStart);
+    this.canvas.addEventListener('touchmove', this.handleTouchMove);
+    this.canvas.addEventListener('touchend', this.handleTouchEnd);
+    this.canvas.addEventListener('touchcancel', this.handleTouchEnd);
 
     // Prevent default touch actions to avoid browser interference
     this.canvas.addEventListener(
-      "touchstart",
+      'touchstart',
       (e) => {
         if (e.touches.length === 1) {
           e.preventDefault();
         }
       },
-      { passive: false }
+      { passive: false },
     );
   }
 
@@ -92,9 +92,9 @@ export class BookInteraction extends EventEmitter<BookInteractionEvents> {
 
     // Determine flip direction based on which side of the canvas was clicked
     const isRightSide = x > rect.width / 2;
-    this.flipDirection = isRightSide ? "forward" : "backward";
+    this.flipDirection = isRightSide ? 'forward' : 'backward';
 
-    this.emit("startFlip", { direction: this.flipDirection });
+    this.emit('startFlip', { direction: this.flipDirection });
   }
 
   private updateInteraction(clientX: number): void {
@@ -109,14 +109,14 @@ export class BookInteraction extends EventEmitter<BookInteractionEvents> {
     // For backward flip, drag right (positive delta)
     let progress = 0;
 
-    if (this.flipDirection === "forward") {
+    if (this.flipDirection === 'forward') {
       progress = Math.max(0, Math.min(1, -deltaX / (rect.width * 0.5)));
     } else {
       progress = Math.max(0, Math.min(1, deltaX / (rect.width * 0.5)));
     }
 
     this.flipProgress = progress;
-    this.emit("updateFlip", { progress });
+    this.emit('updateFlip', { progress });
   }
 
   private endInteraction(): void {
@@ -124,9 +124,9 @@ export class BookInteraction extends EventEmitter<BookInteractionEvents> {
 
     // Complete or cancel the flip based on progress threshold
     if (this.flipProgress > this.flipThreshold) {
-      this.emit("completeFlip", { direction: this.flipDirection });
+      this.emit('completeFlip', { direction: this.flipDirection });
     } else {
-      this.emit("cancelFlip", undefined);
+      this.emit('cancelFlip', undefined);
     }
 
     // Reset interaction state
@@ -136,8 +136,8 @@ export class BookInteraction extends EventEmitter<BookInteractionEvents> {
   }
 
   // Method to programmatically trigger a page turn
-  triggerPageTurn(direction: "forward" | "backward"): void {
-    this.emit("startFlip", { direction });
+  triggerPageTurn(direction: 'forward' | 'backward'): void {
+    this.emit('startFlip', { direction });
 
     // Simulate a quick flip animation
     let progress = 0;
@@ -145,24 +145,24 @@ export class BookInteraction extends EventEmitter<BookInteractionEvents> {
       progress += 0.05;
       if (progress >= 1) {
         clearInterval(interval);
-        this.emit("completeFlip", { direction });
+        this.emit('completeFlip', { direction });
       } else {
-        this.emit("updateFlip", { progress });
+        this.emit('updateFlip', { progress });
       }
     }, 16); // ~60fps
   }
 
   // Clean up method to remove event listeners
   dispose(): void {
-    this.canvas.removeEventListener("mousedown", this.handleMouseDown);
-    this.canvas.removeEventListener("mousemove", this.handleMouseMove);
-    this.canvas.removeEventListener("mouseup", this.handleMouseUp);
-    this.canvas.removeEventListener("mouseleave", this.handleMouseUp);
+    this.canvas.removeEventListener('mousedown', this.handleMouseDown);
+    this.canvas.removeEventListener('mousemove', this.handleMouseMove);
+    this.canvas.removeEventListener('mouseup', this.handleMouseUp);
+    this.canvas.removeEventListener('mouseleave', this.handleMouseUp);
 
-    this.canvas.removeEventListener("touchstart", this.handleTouchStart);
-    this.canvas.removeEventListener("touchmove", this.handleTouchMove);
-    this.canvas.removeEventListener("touchend", this.handleTouchEnd);
-    this.canvas.removeEventListener("touchcancel", this.handleTouchEnd);
+    this.canvas.removeEventListener('touchstart', this.handleTouchStart);
+    this.canvas.removeEventListener('touchmove', this.handleTouchMove);
+    this.canvas.removeEventListener('touchend', this.handleTouchEnd);
+    this.canvas.removeEventListener('touchcancel', this.handleTouchEnd);
 
     this.removeAllListeners();
   }

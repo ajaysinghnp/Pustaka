@@ -29,15 +29,15 @@ npm install pustaka-pdf-viewer
 ```html
 <canvas id="pdf-viewer"></canvas>
 <script type="module">
-  import { PdfBookCore } from 'pustaka-pdf-viewer';
+  import { PustakaCore } from 'pustaka-pdf-viewer';
   
   const canvas = document.getElementById('pdf-viewer');
-  const pdfBook = new PdfBookCore({
+  const Pustaka = new PustakaCore({
     canvas: canvas,
     pdfSource: 'path/to/document.pdf'
   });
   
-  pdfBook.on('ready', ({ totalPages }) => {
+  Pustaka.on('ready', ({ totalPages }) => {
     console.log(`PDF loaded with ${totalPages} pages`);
   });
 </script>
@@ -46,11 +46,11 @@ npm install pustaka-pdf-viewer
 #### React Component
 
 ```jsx
-import { PDFBook } from 'pustaka-pdf-viewer/react';
+import { Pustaka } from 'pustaka-pdf-viewer/react';
 
 function App() {
   return (
-    <PDFBook
+    <Pustaka
       src="/path/to/document.pdf"
       options={{
         hardCovers: true,
@@ -84,7 +84,7 @@ function App() {
 | `ready` | `{ totalPages: number }` | Fired when PDF is loaded and ready |
 | `error` | `{ message: string, error: Error }` | Fired on loading or rendering errors |
 | `pageChanged` | `{ currentPage: number }` | Fired when page navigation occurs |
-| `pageLoaded` | `{ pageNumber: number, page: PdfPage }` | Fired when a page is loaded |
+| `pageLoaded` | `{ pageNumber: number, page: pustakaPage }` | Fired when a page is loaded |
 | `renderComplete` | `{ frameTime: number }` | Fired after each render frame |
 | `orientationChanged` | `{ orientation: 'landscape' \| 'portrait' }` | Fired when orientation changes |
 
@@ -112,7 +112,7 @@ const customFetcher = async (url) => {
   return response.arrayBuffer();
 };
 
-const pdfBook = new PdfBookCore({
+const Pustaka = new PustakaCore({
   canvas: myCanvas,
   pdfSource: 'https://example.com/document.pdf',
   fileFetcher: customFetcher
@@ -171,11 +171,11 @@ npm run dev
 ```
 src/
 ├── core/           # Core rendering engine
-│   ├── PdfBookCore.ts      # Main controller
-│   ├── PdfLoader.ts        # PDF parsing and loading
+│   ├── PustakaCore.ts      # Main controller
+│   ├── PustakaLoader.ts        # PDF parsing and loading
 │   ├── WebGLRenderer.ts    # WebGL rendering implementation
 │   ├── CanvasRenderer.ts   # Canvas2D fallback renderer
-│   └── BookInteraction.ts  # User input handling
+│   └── PustakaInteraction.ts  # User input handling
 ├── types/          # TypeScript type definitions
 ├── utils/          # Utility functions
 └── wrappers/       # Framework-specific wrappers

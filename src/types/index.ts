@@ -1,4 +1,4 @@
-export interface PdfBookConfig {
+export interface PustakaConfig {
   canvas: HTMLCanvasElement | OffscreenCanvas;
   pdfSource?: string | ArrayBuffer | Uint8Array;
   fileFetcher?: FileFetcher;
@@ -10,7 +10,7 @@ export interface FileFetcher {
   (url: string): Promise<ArrayBuffer>;
 }
 
-export interface PdfPage {
+export interface pustakaPage {
   pageNumber: number;
   width: number;
   height: number;
@@ -39,29 +39,29 @@ export interface WebGLContextWrapper {
 }
 
 export interface WebGLRendererMethods {
-  loadPageTexture(page: PdfPage): void;
+  loadPageTexture(page: pustakaPage): void;
   render(): void;
   dispose(): void;
   resize(width: number, height: number): void;
-  setOrientation(orientation: "landscape" | "portrait"): void;
+  setOrientation(orientation: 'landscape' | 'portrait'): void;
   startFlip(
-    direction: "forward" | "backward",
+    direction: 'forward' | 'backward',
     fromPage: number,
-    toPage: number
+    toPage: number,
   ): void;
   updateFlipProgress(progress: number): void;
   completeFlip(): void;
-  getFlipDirection(): "forward" | "backward" | null;
+  getFlipDirection(): 'forward' | 'backward' | null;
   isFlipping(): boolean;
   cancelFlip(): void;
   getFlipProgress(): number;
 }
 
-export type PdfBookEvents = {
+export type PustakaEvents = {
   ready: { totalPages: number };
   error: { message: string; error: Error };
   pageChanged: { currentPage: number };
-  pageLoaded: { pageNumber: number; page: PdfPage };
+  pageLoaded: { pageNumber: number; page: pustakaPage };
   renderComplete: { frameTime: number };
-  orientationChanged: { orientation: "landscape" | "portrait" };
+  orientationChanged: { orientation: 'landscape' | 'portrait' };
 };

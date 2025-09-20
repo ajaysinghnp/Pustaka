@@ -1,21 +1,21 @@
-import { EventEmitter } from "./EventEmitter";
-import { PdfLoader } from "./PdfLoader";
-import { WebGLRenderer } from "./WebGLRenderer";
-import type { FileFetcher, PdfBookConfig, PdfBookEvents } from "../types";
-import { BookInteraction } from "./BookInteraction";
+import { EventEmitter } from './EventEmitter';
+import { PustakaLoader } from './PustakaLoader';
+import { WebGLRenderer } from './WebGLRenderer';
+import type { FileFetcher, PustakaConfig, PustakaEvents } from '../types';
+import { PustakaInteraction } from './PustakaInteraction';
 
-export class PdfBookCore extends EventEmitter<PdfBookEvents> {
-  private config: Required<PdfBookConfig>;
-  private pdfLoader: PdfLoader;
+export class PustakaCore extends EventEmitter<PustakaEvents> {
+  private config: Required<PustakaConfig>;
+  private PustakaLoader: PustakaLoader;
   private renderer: WebGLRenderer;
   private currentPage: number = 1;
   private totalPages: number = 0;
   private _isReady: boolean = false;
   private animationFrame: number | null = null;
-  private orientation: "landscape" | "portrait" = "landscape";
-  private bookInteraction: BookInteraction;
+  private orientation: 'landscape' | 'portrait' = 'landscape';
+  private PustakaInteraction: PustakaInteraction;
 
-  constructor(config: PdfBookConfig) {
+  constructor(config: PustakaConfig) {
     super();
 
     // Provide proper defaults for required properties
@@ -31,14 +31,14 @@ export class PdfBookCore extends EventEmitter<PdfBookEvents> {
       fileFetcher: defaultFileFetcher,
       pdfSource: new Uint8Array(),
       ...config,
-    } as Required<PdfBookConfig>;
+    } as Required<PustakaConfig>;
 
     // Initialize components
-    this.pdfLoader = new PdfLoader(this.config.fileFetcher);
+    this.PustakaLoader = new PustakaLoader(this.config.fileFetcher);
 
     // Check if canvas is provided
     if (!config.canvas) {
-      throw new Error("Canvas element is required");
+      throw new Error('Canvas element is required');
     }
 
     this.renderer = new WebGLRenderer(this.config.canvas);
@@ -46,48 +46,48 @@ export class PdfBookCore extends EventEmitter<PdfBookEvents> {
     this.initialize();
 
     // Initialize book interaction
-    this.bookInteraction = new BookInteraction(
-      this.config.canvas as HTMLCanvasElement
+    this.PustakaInteraction = new PustakaInteraction(
+      this.config.canvas as HTMLCanvasElement,
     );
 
     // Set up event listeners for page turning
-    this.bookInteraction.on("startFlip", (data) => {
+    this.PustakaInteraction.on('startFlip', (data) => {
       this.startPageTurn(data.direction);
     });
 
-    this.bookInteraction.on("updateFlip", (data) => {
+    this.PustakaInteraction.on('updateFlip', (data) => {
       this.updatePageTurnProgress(data.progress);
     });
 
-    this.bookInteraction.on("completeFlip", (_) => {
+    this.PustakaInteraction.on('completeFlip', (_) => {
       this.completePageTurn();
     });
 
-    this.bookInteraction.on("cancelFlip", () => {
+    this.PustakaInteraction.on('cancelFlip', () => {
       this.cancelPageTurn();
     });
   }
 
   checkOrientation(): void {
     const isPortrait = window.innerHeight > window.innerWidth;
-    const newOrientation = isPortrait ? "portrait" : "landscape";
+    const newOrientation = isPortrait ? 'portrait' : 'landscape';
 
     if (this.orientation !== newOrientation) {
       this.orientation = newOrientation;
       this.renderer.setOrientation(newOrientation);
 
       // You might also want to reload pages or adjust layout
-      this.emit("orientationChanged", { orientation: newOrientation });
+      this.emit('orientationChanged', { orientation: newOrientation });
     }
   }
 
   private async initialize(): Promise<void> {
     try {
-      await this.pdfLoader.initialize();
+      await this.PustakaLoader.initialize();
 
       if (
         this.config.pdfSource &&
-        (typeof this.config.pdfSource === "string" ||
+        (typeof this.config.pdfSource === 'string' ||
           (this.config.pdfSource instanceof Uint8Array &&
             this.config.pdfSource.length > 0) ||
           (this.config.pdfSource instanceof ArrayBuffer &&
@@ -96,8 +96,8 @@ export class PdfBookCore extends EventEmitter<PdfBookEvents> {
         await this.loadDocument(this.config.pdfSource);
       }
     } catch (error) {
-      this.emit("error", {
-        message: "Failed to initialize PDF Book Core",
+      this.emit('error', {
+        message: 'Failed to initialize PDF Book Core',
         error: error as Error,
       });
     }
@@ -105,19 +105,19 @@ export class PdfBookCore extends EventEmitter<PdfBookEvents> {
 
   async loadDocument(source: string | ArrayBuffer | Uint8Array): Promise<void> {
     try {
-      this.totalPages = await this.pdfLoader.loadDocument(source);
+      this.totalPages = await this.PustakaLoader.loadDocument(source);
 
       // Load first page
       await this.loadPage(1);
 
       this._isReady = true;
-      this.emit("ready", { totalPages: this.totalPages });
+      this.emit('ready', { totalPages: this.totalPages });
 
       // Start render loop
       this.startRenderLoop();
     } catch (error) {
-      this.emit("error", {
-        message: "Failed to load PDF document",
+      this.emit('error', {
+        message: 'Failed to load PDF document',
         error: error as Error,
       });
     }
@@ -130,23 +130,23 @@ export class PdfBookCore extends EventEmitter<PdfBookEvents> {
 
     try {
       // Load current page
-      const page = await this.pdfLoader.getPage(pageNumber);
+      const page = await this.PustakaLoader.getPage(pageNumber);
       this.renderer.loadPageTexture(page);
 
       // Load previous page for two-page view if needed
-      if (pageNumber > 1 && this.orientation === "landscape") {
-        const prevPage = await this.pdfLoader.getPage(pageNumber - 1);
+      if (pageNumber > 1 && this.orientation === 'landscape') {
+        const prevPage = await this.PustakaLoader.getPage(pageNumber - 1);
         this.renderer.loadPageTexture(prevPage, true);
       }
 
-      this.emit("pageLoaded", { pageNumber, page });
+      this.emit('pageLoaded', { pageNumber, page });
 
       if (pageNumber !== this.currentPage) {
         this.currentPage = pageNumber;
-        this.emit("pageChanged", { currentPage: this.currentPage });
+        this.emit('pageChanged', { currentPage: this.currentPage });
       }
     } catch (error) {
-      this.emit("error", {
+      this.emit('error', {
         message: `Failed to load page ${pageNumber}`,
         error: error as Error,
       });
@@ -155,7 +155,7 @@ export class PdfBookCore extends EventEmitter<PdfBookEvents> {
 
   async goToPage(pageNumber: number): Promise<void> {
     if (!this.isReady) {
-      throw new Error("PDF Book Core not ready");
+      throw new Error('PDF Book Core not ready');
     }
 
     await this.loadPage(pageNumber);
@@ -180,7 +180,7 @@ export class PdfBookCore extends EventEmitter<PdfBookEvents> {
       this.renderer.render(this.currentPage);
 
       const frameTime = performance.now() - startTime;
-      this.emit("renderComplete", { frameTime });
+      this.emit('renderComplete', { frameTime });
 
       this.animationFrame = requestAnimationFrame(render);
     };
@@ -216,18 +216,18 @@ export class PdfBookCore extends EventEmitter<PdfBookEvents> {
   dispose(): void {
     this.stopRenderLoop();
     this.renderer.dispose();
-    this.pdfLoader.dispose();
+    this.PustakaLoader.dispose();
     this.removeAllListeners();
     this._isReady = false;
-    this.bookInteraction.dispose();
+    this.PustakaInteraction.dispose();
   }
 
-  startPageTurn(direction: "forward" | "backward"): void {
+  startPageTurn(direction: 'forward' | 'backward'): void {
     if (!this.isReady()) return;
 
     const fromPage = this.currentPage;
     let toPage =
-      direction === "forward" ? this.currentPage + 1 : this.currentPage - 1;
+      direction === 'forward' ? this.currentPage + 1 : this.currentPage - 1;
 
     // Validate page range
     if (toPage < 1 || toPage > this.totalPages) return;
@@ -248,12 +248,12 @@ export class PdfBookCore extends EventEmitter<PdfBookEvents> {
   private completePageTurn(): void {
     const direction = this.renderer.getFlipDirection();
 
-    if (direction === "forward" && this.currentPage < this.totalPages) {
+    if (direction === 'forward' && this.currentPage < this.totalPages) {
       this.currentPage++;
-      this.emit("pageChanged", { currentPage: this.currentPage });
-    } else if (direction === "backward" && this.currentPage > 1) {
+      this.emit('pageChanged', { currentPage: this.currentPage });
+    } else if (direction === 'backward' && this.currentPage > 1) {
       this.currentPage--;
-      this.emit("pageChanged", { currentPage: this.currentPage });
+      this.emit('pageChanged', { currentPage: this.currentPage });
     }
 
     this.renderer.completeFlip();

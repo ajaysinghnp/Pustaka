@@ -1,12 +1,12 @@
-export { PdfBookCore } from "./core/PdfBookCore";
-export { EventEmitter } from "./core/EventEmitter";
+export { PustakaCore } from './core/PustakaCore';
+export { EventEmitter } from './core/EventEmitter';
 export type {
-  PdfBookConfig,
-  PdfBookEvents,
-  PdfPage,
+  PustakaConfig,
+  PustakaEvents,
+  pustakaPage,
   FileFetcher,
   WebGLContextWrapper,
-} from "./types";
+} from './types';
 
 // Version info
-export const version = "0.1.0";
+export const version = '0.1.0';

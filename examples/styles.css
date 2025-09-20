@@ -1,0 +1,24 @@
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  align-items: center;
+  background: #dfdfdf;
+  height: 100vh;
+}
+
+.controls {
+  margin-top: 10px;
+}
+
+.pdf-canvas {
+  border: 1px solid #ccc;
+  background: #ab1515;
+  width: 100vw;
+}
